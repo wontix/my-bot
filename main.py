@@ -1,60 +1,41 @@
 import os
-import telebot
-from telebot import types
-import yt_dlp
-import requests
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
+import http.server
+import socketserver
+import telebot
+import yt_dlp
 
-# Токен твоего бота
-TOKEN = "8923474171:AAG9vhIa0ZgcV8zSxBGyA-Wij9omOc13yWs"
+TOKEN = os.environ.get('BOT_TOKEN')
 bot = telebot.TeleBot(TOKEN)
 
+def run_dummy_server():
+    with socketserver.TCPServer(("", int(os.environ.get("PORT", 10000))), http.server.SimpleHTTPRequestHandler) as httpd:
+        httpd.serve_forever()
+
+threading.Thread(target=run_dummy_server, daemon=True).start()
+
 @bot.message_handler(commands=['start'])
-def start(message):
-    markup = types.InlineKeyboardMarkup()
-    btn1 = types.InlineKeyboardButton("Перейти на сайт", url="https://example.com")
-    markup.add(btn1)
-    bot.send_message(message.chat.id, "Привет! Отправь мне ссылку на видео YouTube, и я помогу тебе его скачать.", reply_markup=markup)
+def send_welcome(message):
+    bot.reply_to(message, "Привет! Отправь мне ссылку на YouTube-видео, и я скачаю его для тебя.")
 
 @bot.message_handler(func=lambda message: True)
-def handle_message(message):
+def download_video(message):
     url = message.text
-    if "youtube.com" in url or "youtu.be" in url:
-        try:
-            bot.reply_to(message, "Начиныю скачивание видео...")
-            
-            ydl_opts = {
-                'format': 'best',
-                'outtmpl': 'video.mp4',
-            }
-            
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download([url])
-                
-            with open('video.mp4', 'rb') as video:
-                bot.send_video(message.chat.id, video)
-                
-            os.remove('video.mp4')
-            
-        except Exception as e:
-            bot.reply_to(message, f"Произошла ошибка при скачивании: {str(e)}")
-    else:
-        bot.reply_to(message, "Пожалуйста, отправь корректную ссылку на YouTube видео.")
+    try:
+        bot.reply_to(message, "Скачиваю видео, подожди немного...")
+        ydl_opts = {
+            'format': 'mp4',
+            'outtmpl': 'video.mp4',
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
 
-class WebServer(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.send_header("Content-type", "text/html")
-        self.end_headers()
-        self.wfile.write(b"Bot is alive!")
+        with open('video.mp4', 'rb') as video:
+            bot.send_video(message.chat.id, video)
 
-def run_web_server():
-    port = int(os.environ.get("PORT", 10000))
-    server = HTTPServer(("0.0.0.0", port), WebServer)
-    server.serve_forever()
+        os.remove('video.mp4')
+    except Exception as e:
+        bot.reply_to(message, f"Произошла ошибка при скачивании: {str(e)}")
 
-if __name__ == '__main__':
-    threading.Thread(target=run_web_server, daemon=True).start()
-print("Бот успешно запущен и готов к работе!!!")
+print("Бот успешно запущен и готов к работе!")
 bot.infinity_polling()
