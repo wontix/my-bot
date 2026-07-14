@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 
 # Токен твоего бота
-TOKEN = "7330089069:AAGD6v5oD0M_Z83_p6qscF9hVp9zT262DYo"
+TOKEN = "8923474171:AAG9vhIa0ZgcV8zSxBGyA-Wij9omOc13yWs"
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
