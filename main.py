@@ -56,5 +56,5 @@ def run_web_server():
 
 if __name__ == '__main__':
     threading.Thread(target=run_web_server, daemon=True).start()
-    print("Бот успешно запущен и готов к работе!")
+print("Бот успешно запущен и готов к работе!!!")
     bot.infinity_polling()
