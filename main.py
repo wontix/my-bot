@@ -1,3 +1,5 @@
+from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
 import os
 import telebot
 from yt_dlp import YoutubeDL
@@ -45,6 +47,19 @@ def handle_message(message):
         if os.path.exists(outtmpl):
             os.remove(outtmpl)
 
+class WebServer(BaseHTTPRequestHandler):
+def do_GET(self):
+self.send_response(200)
+self.send_header("Content-type", "text/html")
+self.end_headers()
+self.wfile.write(b"Bot is alive!")
+
+def run_web_server():
+port = int(os.environ.get("PORT", 10000))
+server = HTTPServer(("0.0.0.0", port), WebServer)
+server.serve_forever()
+
 if __name__ == '__main__':
-    print("Бот успешно запущен и готов к работе!")
-    bot.infinity_polling()
+threading.Thread(target=run_web_server, daemon=True).start()
+print("Бот успешно запущен и готов к работе!")
+bot.infinity_polling()
